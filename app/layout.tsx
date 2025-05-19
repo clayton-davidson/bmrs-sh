@@ -1,7 +1,6 @@
 import "./globals.css";
 
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { auth } from "@/auth";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
@@ -10,23 +9,14 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "sonner";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { NuqsAdapter } from "nuqs/adapters/next";
 
 export const metadata: Metadata = {
   title: {
-    default: "BMRS",
-    template: "%s | BMRS",
+    default: "Beam Mill",
+    template: "%s | Beam Mill",
   },
-  description: "BMRS - Beam Mill Roll Shop",
+  description: "Beam Mill",
 };
 
 export default async function RootLayout({
@@ -41,9 +31,7 @@ export default async function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -52,17 +40,21 @@ export default async function RootLayout({
         >
           <QueryProvider>
             <AuthProvider session={session}>
-              <div className="[--header-height:calc(theme(spacing.14))]">
-                <SidebarProvider className="flex flex-col">
-                  <SiteHeader />
-                  <div className="flex flex-1">
-                    <AppSidebar />
-                    <SidebarInset>
-                      <main>{children}</main>
-                    </SidebarInset>
-                  </div>
-                </SidebarProvider>
-              </div>
+              <NuqsAdapter>
+                <div className="[--header-height:calc(theme(spacing.14))]">
+                  <SidebarProvider className="flex flex-col">
+                    <SiteHeader />
+                    <div className="flex flex-1 overflow-hidden">
+                      <AppSidebar />
+                      <SidebarInset className="overflow-hidden">
+                        <div className="h-full overflow-auto p-2">
+                          <div className="max-w-full">{children}</div>
+                        </div>
+                      </SidebarInset>
+                    </div>
+                  </SidebarProvider>
+                </div>
+              </NuqsAdapter>
             </AuthProvider>
           </QueryProvider>
         </ThemeProvider>

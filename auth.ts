@@ -1,4 +1,4 @@
-import NextAuth, { type NextAuthConfig, type DefaultSession } from "next-auth";
+import NextAuth, { type DefaultSession } from "next-auth";
 import KeycloakProvider from "next-auth/providers/keycloak";
 
 declare module "next-auth" {

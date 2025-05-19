@@ -139,7 +139,7 @@ export function NavMain({ items }: { items: MenuItem[] }) {
                         className="data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
                       >
                         <Link href={subItem.url || "/"}>
-                          <span>{subItem.label}</span>
+                          <span className={"text-wrap"}>{subItem.label}</span>
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>

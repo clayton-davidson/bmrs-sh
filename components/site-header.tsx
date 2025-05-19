@@ -25,7 +25,7 @@ export function SiteHeader() {
         <div className="hidden md:block mx-2 h-4" />
 
         <h4 className="text-2xl font-semibold tracking-tight md:mr-0 text-center w-full md:w-auto md:text-left">
-          <Link href="/">BMRS</Link>
+          <Link href="/">Beam Mill</Link>
         </h4>
 
         <div className="hidden md:block md:flex-1" />

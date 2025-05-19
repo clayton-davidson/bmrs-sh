@@ -7,16 +7,16 @@ import { Button } from "@/components/ui/button";
 interface DataTableColumnHeaderProps<TData, TValue>
   extends React.HTMLAttributes<HTMLDivElement> {
   column: Column<TData, TValue>;
-  title: string;
+  header: string;
 }
 
 export function DataTableColumnHeader<TData, TValue>({
   column,
-  title,
+  header,
   className,
 }: DataTableColumnHeaderProps<TData, TValue>) {
   if (!column.getCanSort()) {
-    return <div className={cn(className)}>{title}</div>;
+    return <div className={cn(className)}>{header}</div>;
   }
 
   return (
@@ -29,7 +29,7 @@ export function DataTableColumnHeader<TData, TValue>({
           column.toggleSorting(column.getIsSorted() === "asc");
         }}
       >
-        <span>{title}</span>
+        <span>{header}</span>
         {column.getIsSorted() === "desc" ? (
           <ArrowDown className="ml-2 h-4 w-4" />
         ) : column.getIsSorted() === "asc" ? (

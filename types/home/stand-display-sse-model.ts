@@ -1,0 +1,34 @@
+export interface StandDisplaySSEModel {
+  isS1: boolean;
+  isS2: boolean;
+  isS3: boolean;
+  isS4: boolean;
+  isS5: boolean;
+  isS6: boolean;
+  isS7: boolean;
+  isS7Hmd: boolean;
+  isS8: boolean;
+  isS9: boolean;
+  isS9Hmd: boolean;
+  isS10: boolean;
+  isS11: boolean;
+  isS11Hmd: boolean;
+  isS12: boolean;
+  isS13: boolean;
+  isS13Hmd: boolean;
+  isS14: boolean;
+  isS15: boolean;
+  isS15Hmd: boolean;
+  isRt2: boolean;
+  isRt2Hmd: boolean;
+  layerCount: number;
+  barCount: number;
+  cs1BladeCuts: number;
+  cs2BladeCuts: number;
+  cs1DiameterInches: number;
+  cs2DiameterInches: number;
+  cs1Length: { feet: number; inches: number };
+  cs2Length: { feet: number; inches: number };
+  stackerALength: { feet: number; inches: number };
+  stackerBLength: { feet: number; inches: number };
+}
