@@ -47,7 +47,7 @@ export default async function RootLayout({
                     <div className="flex flex-1 overflow-hidden">
                       <AppSidebar />
                       <SidebarInset className="overflow-hidden">
-                        <div className="h-full overflow-auto p-2">
+                        <div className="h-full overflow-auto px-4 py-2">
                           <div className="max-w-full">{children}</div>
                         </div>
                       </SidebarInset>

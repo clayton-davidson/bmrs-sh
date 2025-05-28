@@ -1,7 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { ProcessedCustomerData } from "../../schemas/customers";
+import type { ProcessedCustomerData } from "../../schemas/customers";
 import {
   Card,
   CardHeader,
@@ -18,14 +18,14 @@ interface OrdersTabProps {
 
 export const OrdersTab = ({ customerData }: OrdersTabProps) => {
   return (
-    <Card>
-      <CardHeader className="pb-2">
+    <Card className="w-full h-full flex flex-col overflow-hidden">
+      <CardHeader className="pb-2 flex-shrink-0">
         <CardTitle className="text-base">Order History</CardTitle>
         <CardDescription>Monthly breakdown of orders</CardDescription>
       </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[450px]">
-          <div className="space-y-2">
+      <CardContent className="flex-1 overflow-hidden p-0">
+        <ScrollArea className="h-full w-full">
+          <div className="px-6 pb-4">
             {customerData.orderEntries.length > 0 ? (
               customerData.orderEntries.map((entry, index) => (
                 <div

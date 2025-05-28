@@ -81,7 +81,7 @@
 .dark {
   --background: oklch(0.141 0.005 285.823);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.885);
+  --card: oklch(0.141 0.005 285.823);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.21 0.006 285.885);
   --popover-foreground: oklch(0.985 0 0);
@@ -120,20 +120,106 @@
   body {
     @apply bg-background text-foreground;
   }
+}
 
-  :root {
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+@keyframes wave1 {
+  0% {
+    transform: translateX(0) translateY(0);
   }
+  20% {
+    transform: translateX(-2px) translateY(1px);
+  }
+  40% {
+    transform: translateX(0) translateY(2px);
+  }
+  60% {
+    transform: translateX(2px) translateY(1px);
+  }
+  80% {
+    transform: translateX(1px) translateY(0.5px);
+  }
+  100% {
+    transform: translateX(0) translateY(0);
+  }
+}
 
-  .dark {
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+@keyframes wave2 {
+  0% {
+    transform: translateX(0) translateY(0);
+  }
+  25% {
+    transform: translateX(2px) translateY(-1px);
+  }
+  50% {
+    transform: translateX(1px) translateY(-0.5px);
+  }
+  75% {
+    transform: translateX(-2px) translateY(-1px);
+  }
+  100% {
+    transform: translateX(0) translateY(0);
+  }
+}
+
+@keyframes wave3 {
+  0% {
+    transform: translateY(0) scaleX(1);
+  }
+  30% {
+    transform: translateY(0.5px) scaleX(0.995);
+  }
+  50% {
+    transform: translateY(1px) scaleX(0.99);
+  }
+  70% {
+    transform: translateY(0.5px) scaleX(0.995);
+  }
+  100% {
+    transform: translateY(0) scaleX(1);
+  }
+}
+
+@keyframes wave4 {
+  0% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-0.5px);
+  }
+  50% {
+    transform: translateY(-1px);
+  }
+  75% {
+    transform: translateY(-0.5px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes glossy {
+  0% {
+    opacity: 0.4;
+    transform: translateX(0);
+  }
+  20% {
+    opacity: 0.5;
+    transform: translateX(2px);
+  }
+  40% {
+    opacity: 0.6;
+    transform: translateX(4px);
+  }
+  60% {
+    opacity: 0.6;
+    transform: translateX(5px);
+  }
+  80% {
+    opacity: 0.5;
+    transform: translateX(2px);
+  }
+  100% {
+    opacity: 0.4;
+    transform: translateX(0);
   }
 }

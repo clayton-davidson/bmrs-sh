@@ -1,10 +1,12 @@
+"use client";
+
 import {
   AccessorKeyColumnDefBase,
   flexRender,
   Table as TanstackTable,
 } from "@tanstack/react-table";
 import { Search, X } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState, startTransition } from "react";
 
 import {
   Table,
@@ -110,6 +112,7 @@ const exportToCSV = <TData,>(
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
 
 const TableSkeleton = ({
@@ -168,78 +171,88 @@ export function DataTable<TData, TValue>({
   exportFileName = "table-data",
   enablePagination = true,
 }: DataTableProps<TData, TValue>) {
-  const globalFilter = table.getState().globalFilter as string;
+  // hydration fix
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const globalFilter = isMounted
+    ? (table?.getState?.()?.globalFilter as string) || ""
+    : "";
 
   const handleFilterChange = useCallback(
     (value: string) => {
-      table.setGlobalFilter(value);
+      if (isMounted && table?.setGlobalFilter) {
+        startTransition(() => {
+          table.setGlobalFilter(value);
+        });
+      }
     },
-    [table]
+    [table, isMounted]
   );
 
   const handleExport = useCallback(() => {
+    if (!isMounted || !table) return;
     const data = table.getFilteredRowModel().rows.map((row) => row.original);
     exportToCSV(data, columns, exportFileName);
-  }, [table, columns, exportFileName]);
+  }, [table, columns, exportFileName, isMounted]);
 
-  if (isLoading) {
+  if (!isMounted || isLoading) {
     return (
       <div className="space-y-4">
         {(enableGlobalFilter || enableExport) && (
           <div className="flex items-center justify-between gap-2">
             {enableGlobalFilter && (
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground opacity-50" />
+              <div className="relative flex-1 max-w-sm opacity-50">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search..."
                   value=""
                   onChange={() => {}}
-                  className="pl-8 pr-8 opacity-70"
-                  aria-label="Search table data"
-                  disabled={true}
+                  className="pl-8 pr-8"
+                  disabled
                 />
               </div>
             )}
             {enableExport && (
               <Button
-                variant="default"
+                variant="outline"
                 size="sm"
-                onClick={() => {}}
-                className="flex items-center gap-2 opacity-70"
-                disabled={true}
+                disabled
+                className="opacity-50"
               >
-                <span>Export</span>
+                Export
               </Button>
             )}
           </div>
         )}
-
-        <TableSkeleton columns={columns.length} rows={skeletonRows} />
+        <TableSkeleton columns={columns?.length || 5} rows={skeletonRows} />
       </div>
     );
   }
 
+  // client side here
   const headerGroups = table.getHeaderGroups();
   const rowModel = table.getRowModel();
   const footerGroups = table.getFooterGroups();
   const hasFooter = columns.some((column) => column.footer);
 
-  const renderTableControls = enableGlobalFilter || enableExport;
-
   return (
     <div className="space-y-4">
-      {renderTableControls && (
+      {(enableGlobalFilter || enableExport) && (
         <div className="flex items-center justify-between gap-2">
           {enableGlobalFilter && (
             <TableSearch
-              value={globalFilter || ""}
+              value={globalFilter}
               onChange={handleFilterChange}
               isLoading={false}
             />
           )}
           {enableExport && (
             <Button
-              variant="default"
+              variant="outline"
               size="sm"
               onClick={handleExport}
               className="flex items-center gap-2"

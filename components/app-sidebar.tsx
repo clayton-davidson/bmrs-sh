@@ -19,43 +19,42 @@ const items: MenuItem[] = [
   {
     label: "Reports",
     children: [
-      { label: "Morning Meeting", url: "/Reports/MorningMeeting" },
-      { label: "Delay Report", url: "/Reports/Delay" },
-      { label: "Pacing Adjustments", url: "/Reports/PaceChange" },
-      { label: "Scrap Report", url: "/Reports/Scrap" },
+      { label: "Morning Meeting", url: "/reports/morning-meeting" },
+      { label: "Delay Report", url: "/reports/delay" },
+      { label: "Pacing Adjustments", url: "/reports/pace-change" },
+      { label: "Scrap Report", url: "/reports/scrap" },
       { label: "Credit Report", url: "/reports/credit" },
-      { label: "Shift Report", url: "/Reports/Shift" },
-      { label: "Rolling Schedule", url: "/Reports/RollingSchedule" },
-      { label: "Achievement Report", url: "/Reports/Achievement" },
-      { label: "Performance Charts", url: "/Reports/PerformanceCharts" },
-      { label: "Tonnage Chart", url: "/Reports/TonnageChart" },
-      { label: "Meeting Report", url: "/Reports/MeetingReport" },
-      { label: "Logbook", url: "/Reports/Logbook" },
-      { label: "Maintenance Items", url: "/Reports/MaintenanceItems" },
-      { label: "Hydraulic Report", url: "/Reports/Hydraulic" },
-      { label: "Daily Shift Inspections", url: "/Reports/ShiftInspections" },
-      { label: "Measurements", url: "/Reports/Measurements" },
-      { label: "True Up Report", url: "/Reports/TrueUp" },
-      { label: "Work Order Search", url: "/Reports/WorkOrderSearch" },
+      { label: "Shift Report", url: "/reports/shift" },
+      { label: "Rolling Schedule", url: "/reports/rolling-schedule" },
+      { label: "Achievement Report", url: "/reports/achievement" },
+      { label: "Performance Charts", url: "/reports/performance-charts" },
+      { label: "Tonnage Charts", url: "/reports/tonnage-charts" },
+      { label: "Meeting Report", url: "/reports/meeting-report" },
+      { label: "Logbook", url: "/reports/logbook" },
+      { label: "Maintenance Items", url: "/reports/maintenance-items" },
+      { label: "Hydraulic Report", url: "/reports/hydraulic" },
+      { label: "Daily Shift Inspections", url: "/reports/shift-inspections" },
+      { label: "Measurements", url: "/reports/measurements" },
+      { label: "Work Order Search", url: "/reports/work-order-search" },
     ],
   },
   {
     label: "Reheat",
     children: [
-      { label: "Furnace Maps", url: "/Reheat/FurnaceMaps" },
-      { label: "BC/RHF Tracking", url: "/Reheat/Tracking" },
-      { label: "Furnace Charge List", url: "/Reheat/FurnaceChargeList" },
+      { label: "Furnace Maps", url: "/reheat/furnace-maps" },
+      { label: "BC/RHF Tracking", url: "/reheat/tracking" },
+      { label: "Furnace Charge List", url: "/reheat/furnace-charge-list" },
       {
         label: "Dropout Temp Trend",
-        url: "/Reheat/FurnaceDropoutTemp",
+        url: "/reheat/furnace-dropout-temp",
       },
       {
         label: "Gas Consumption (SCF)",
-        url: "/Reheat/FurnaceGasConsumption",
+        url: "/reheat/furnace-gas-consumption",
       },
-      { label: "Cut Lengths", url: "/Reheat/CutLengths" },
-      { label: "Heat Notes", url: "/Reheat/HeatNotes" },
-      { label: "Cast Orders", url: "/Reheat/Orders" },
+      { label: "Cut Lengths", url: "/reheat/cut-lengths" },
+      { label: "Heat Notes", url: "/reheat/heat-notes" },
+      { label: "Cast Orders", url: "/reheat/orders" },
     ],
   },
   {
@@ -300,13 +299,13 @@ const items: MenuItem[] = [
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar
-      className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
+      className="top-(--header-height) h-[calc(100svh-var(--header-height))] overflow-hidden"
       {...props}
     >
-      <SidebarContent>
+      <SidebarContent className="flex flex-col h-full overflow-hidden">
         <NavMain items={items} />
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="flex-shrink-0">
         <NavUser />
       </SidebarFooter>
     </Sidebar>

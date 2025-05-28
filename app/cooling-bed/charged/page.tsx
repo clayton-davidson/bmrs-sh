@@ -3,7 +3,6 @@ import { getChargedCoolingBed } from "@/features/cooling-bed/server/db/cooling-b
 import { getQueryClient } from "@/lib/misc/get-query-client";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { Metadata } from "next";
-import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Cooling Bed Charged",
@@ -18,10 +17,8 @@ export default function CurrentBed() {
   });
 
   return (
-    <Suspense>
-      <HydrationBoundary state={dehydrate(queryClient)}>
-        <ChargedTable />
-      </HydrationBoundary>
-    </Suspense>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <ChargedTable />
+    </HydrationBoundary>
   );
 }

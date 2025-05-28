@@ -9,6 +9,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   SidebarGroup,
   SidebarMenu,
@@ -155,12 +156,16 @@ export function NavMain({ items }: { items: MenuItem[] }) {
   );
 
   return (
-    <SidebarGroup>
-      <SidebarMenu>
-        {items.map((item) => (
-          <MenuItemComponent key={item.label} item={item} />
-        ))}
-      </SidebarMenu>
+    <SidebarGroup className="flex-1 overflow-hidden">
+      <ScrollArea className="h-full w-full">
+        <div className="px-2">
+          <SidebarMenu>
+            {items.map((item) => (
+              <MenuItemComponent key={item.label} item={item} />
+            ))}
+          </SidebarMenu>
+        </div>
+      </ScrollArea>
     </SidebarGroup>
   );
 }

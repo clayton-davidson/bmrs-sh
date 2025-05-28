@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
-import { ChevronLeft, Home, ChevronRight } from "lucide-react";
+import { ChevronLeft, Home, ChevronRight, Calendar } from "lucide-react";
 import dayjs from "dayjs";
 import { CrewCalculator } from "@/lib/misc/crew-calculator";
 
@@ -88,6 +88,134 @@ const DateChanger = ({
 
   const [isPending, startTransition] = useTransition();
 
+  // Helper function to determine if dates represent "today" (for night shifts, check if it starts today)
+  const isToday = (start: Date): boolean => {
+    const today = new Date();
+    const startDay = dayjs(start).format("YYYY-MM-DD");
+    const todayDay = dayjs(today).format("YYYY-MM-DD");
+    return startDay === todayDay;
+  };
+
+  // Helper function to get shift type based on start time
+  const getShiftType = (start: Date): string => {
+    const hour = start.getHours();
+    return hour >= 6 && hour < 18 ? "Day Shift" : "Night Shift";
+  };
+
+  // Helper function to check if this represents a single shift (exactly 12 hours, 6 to 6)
+  const isSingleShift = (start: Date, stop: Date): boolean => {
+    // Calculate duration in hours
+    const durationHours = (stop.getTime() - start.getTime()) / (1000 * 60 * 60);
+
+    // Must be exactly 12 hours to be a single shift
+    const isExactly12Hours = Math.abs(durationHours - 12) < 0.1;
+    if (!isExactly12Hours) return false;
+
+    const startDay = dayjs(start);
+    const stopDay = dayjs(stop);
+    const isSameDay =
+      startDay.format("YYYY-MM-DD") === stopDay.format("YYYY-MM-DD");
+    const startHour = start.getHours();
+    const stopHour = stop.getHours();
+
+    // Same calendar day (day shift: 6 AM to 6 PM)
+    if (isSameDay) {
+      return startHour === 6; // Must start at exactly 6 AM
+    }
+
+    // Night shift (spans exactly one day, 6 PM to 6 AM)
+    const startDate = startDay.format("YYYY-MM-DD");
+    const stopDate = stopDay.format("YYYY-MM-DD");
+    const dayDifference = dayjs(stopDate).diff(dayjs(startDate), "day");
+
+    return dayDifference === 1 && startHour === 18 && stopHour === 6;
+  };
+
+  // Smart date range formatter that handles all scenarios
+  const formatSmartDateRange = (start: Date, stop: Date): string => {
+    const startDay = dayjs(start);
+    const stopDay = dayjs(stop);
+    const isSameDay =
+      startDay.format("YYYY-MM-DD") === stopDay.format("YYYY-MM-DD");
+    const isSameYear = startDay.format("YYYY") === stopDay.format("YYYY");
+
+    if (isSameDay) {
+      return `${startDay.format("MMM D, YYYY")} • ${startDay.format(
+        "h:mm A"
+      )} - ${stopDay.format("h:mm A")}`;
+    } else if (isSameYear) {
+      return `${startDay.format("MMM D, h:mm A")} - ${stopDay.format(
+        "MMM D, h:mm A, YYYY"
+      )}`;
+    } else {
+      return `${startDay.format("MMM D, YYYY, h:mm A")} - ${stopDay.format(
+        "MMM D, YYYY, h:mm A"
+      )}`;
+    }
+  };
+
+  // Improved date formatting based on mode and context
+  const formatDateRange = (
+    start: Date,
+    stop: Date
+  ): { primary: string; secondary: string } => {
+    const startDay = dayjs(start);
+    const stopDay = dayjs(stop);
+    const isSingleShiftRange = isSingleShift(start, stop);
+
+    // For multi-day ranges (not single shifts), show full datetime range in primary
+    if (!isSingleShiftRange) {
+      return {
+        primary: formatSmartDateRange(start, stop),
+        secondary: "",
+      };
+    }
+
+    // For single shift ranges (including night shifts), show smart formatting based on mode
+    if (tmpMode === DateChangerMode.SHIFT) {
+      if (isToday(start)) {
+        const shiftType = getShiftType(start);
+        const secondary = `${startDay.format(
+          "MMM D, YYYY"
+        )} • ${startDay.format("h:mm A")} - ${stopDay.format("h:mm A")}`;
+
+        return {
+          primary: `Today • ${shiftType}`,
+          secondary,
+        };
+      } else {
+        return {
+          primary: `${startDay.format("dddd")} • ${getShiftType(start)}`,
+          secondary: `${startDay.format("MMM D, YYYY")} • ${startDay.format(
+            "h:mm A"
+          )} - ${stopDay.format("h:mm A")}`,
+        };
+      }
+    } else if (tmpMode === DateChangerMode.DAY) {
+      if (isToday(start)) {
+        return {
+          primary: "Today",
+          secondary: `${startDay.format("MMM D, YYYY")} • ${startDay.format(
+            "h:mm A"
+          )} - ${stopDay.format("h:mm A")}`,
+        };
+      } else {
+        return {
+          primary: startDay.format("dddd"),
+          secondary: `${startDay.format("MMM D, YYYY")} • ${startDay.format(
+            "h:mm A"
+          )} - ${stopDay.format("h:mm A")}`,
+        };
+      }
+    } else {
+      // For other modes on single shifts
+      return {
+        primary: startDay.format("MMM D, YYYY"),
+        secondary: `${startDay.format("h:mm A")} - ${stopDay.format("h:mm A")}`,
+      };
+    }
+  };
+
   const dateChange = async () => {
     setWindowVisible(false);
     setDisplayDates({ start: tmpStartDate, stop: tmpStopDate });
@@ -116,6 +244,7 @@ const DateChanger = ({
     await invokeDateChangedAndAssign(newStartDate, newStopDate);
   };
 
+  // Navigation functions
   const previousShift = () =>
     changeDates(
       new Date(tmpStartDate.getTime() - 12 * 60 * 60 * 1000),
@@ -294,49 +423,30 @@ const DateChanger = ({
     }
   };
 
-  const formatDate = (date: Date): string => {
-    return dayjs(date).format("M/D/YYYY h:mm:ss A");
-  };
+  const { primary, secondary } = formatDateRange(
+    displayDates.start,
+    displayDates.stop
+  );
 
   return (
-    <div className="container mx-auto">
-      <div className="flex flex-col items-center gap-1">
-        <p className="text-lg font-bold">{`${formatDate(
-          displayDates.start
-        )} - ${formatDate(displayDates.stop)}`}</p>
-        <div className="flex gap-2">
-          <Button
-            variant="default"
-            size="icon"
-            onClick={getPreviousFunction()}
-            disabled={isPending}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="default"
-            size="icon"
-            onClick={getThisFunction()}
-            disabled={isPending}
-          >
-            <Home className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="default"
-            size="icon"
-            onClick={getNextFunction()}
-            disabled={isPending}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+    <div>
+      <div className="flex flex-col gap-4 py-2 md:flex-row md:items-center md:justify-between">
+        {/* Date Display */}
+        <div className="flex-1 text-center md:text-left">
+          <div className="text-lg font-semibold">{primary}</div>
+          {secondary && (
+            <div className="text-sm text-muted-foreground">{secondary}</div>
+          )}
         </div>
-        {showDateChangeRangeDropList && (
-          <div className="w-full">
+
+        {/* Navigation Controls */}
+        <div className="flex items-center gap-2 justify-center md:justify-end">
+          {showDateChangeRangeDropList && (
             <Select
               value={tmpMode}
               onValueChange={(value) => setTmpMode(value as DateChangerMode)}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-24 h-8">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -347,49 +457,78 @@ const DateChanger = ({
                 ))}
               </SelectContent>
             </Select>
+          )}
+
+          <div className="flex gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={getPreviousFunction()}
+              disabled={isPending}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={getThisFunction()}
+              disabled={isPending}
+            >
+              <Home className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={getNextFunction()}
+              disabled={isPending}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
-        )}
-        {showCustomDatesButton && (
-          <Button
-            size="sm"
-            onClick={() => setWindowVisible(true)}
-            disabled={isPending}
-          >
-            Custom Dates
-          </Button>
-        )}
-        <Dialog
-          open={windowVisible}
-          onOpenChange={(open) => {
-            console.log("Dialog state changing to:", open);
-            setWindowVisible(open);
-          }}
-        >
+
+          {showCustomDatesButton && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setWindowVisible(true)}
+              disabled={isPending}
+            >
+              <Calendar className="h-4 w-4 mr-1" />
+              Custom
+            </Button>
+          )}
+        </div>
+
+        <Dialog open={windowVisible} onOpenChange={setWindowVisible}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Custom Dates Selection</DialogTitle>
+              <DialogTitle>Custom Date Range</DialogTitle>
             </DialogHeader>
             <div onKeyDown={handleKeyDown}>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="mb-2">From:</p>
+                  <p className="mb-2 font-medium">From:</p>
                   <DateTimePicker
                     value={tmpStartDate}
                     onChange={(date) => date && setTmpStartDate(date)}
                   />
                 </div>
                 <div>
-                  <p className="mb-2">To:</p>
+                  <p className="mb-2 font-medium">To:</p>
                   <DateTimePicker
                     value={tmpStopDate}
                     onChange={(date) => date && setTmpStopDate(date)}
                   />
                 </div>
               </div>
-              <div className="flex gap-2 mt-4">
-                <Button size="sm" onClick={dateChange}>
-                  Submit
+              <div className="flex gap-2 mt-6 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setWindowVisible(false)}
+                >
+                  Cancel
                 </Button>
+                <Button onClick={dateChange}>Apply Range</Button>
               </div>
             </div>
           </DialogContent>

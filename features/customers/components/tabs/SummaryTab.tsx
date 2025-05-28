@@ -1,6 +1,6 @@
 "use client";
 
-import { ProcessedCustomerData } from "../../schemas/customers";
+import type { ProcessedCustomerData } from "../../schemas/customers";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -34,14 +34,14 @@ export const SummaryTab = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 h-full overflow-auto">
       <div className="grid md:grid-cols-2 gap-4">
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader>
             <CardTitle className="text-base">Order Summary</CardTitle>
           </CardHeader>
-          <CardContent className="pb-2">
-            <div className="grid grid-cols-2 gap-2 mb-2">
+          <CardContent>
+            <div className="grid grid-cols-2 mb-2">
               <div>
                 <div className="text-sm text-muted-foreground">
                   Tons Ordered
@@ -67,7 +67,7 @@ export const SummaryTab = ({
                 className={`text-2xl font-bold ${
                   customerData.fulfillmentRate
                     ? getFulfillmentColor(
-                        parseFloat(customerData.fulfillmentRate)
+                        Number.parseFloat(customerData.fulfillmentRate)
                       )
                     : ""
                 }`}
@@ -79,7 +79,7 @@ export const SummaryTab = ({
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader>
             <CardTitle className="text-base">Top Products</CardTitle>
           </CardHeader>
           <CardContent className="pb-0">

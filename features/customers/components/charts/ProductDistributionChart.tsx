@@ -11,6 +11,7 @@ import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
+  ChartTooltipContent,
 } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 import { ProductBreakdown } from "../../schemas/customers";
@@ -33,12 +34,6 @@ const chartConfig = {
 export const ProductDistributionChart = ({
   products,
 }: ProductDistributionChartProps) => {
-  const customTooltipFormatter = (value: any, name: string) => {
-    if (name === "tons") return [`${value.toFixed(2)} tons`, "Volume"];
-    if (name === "bundlesOrdered") return [`${value} bundles`, "Quantity"];
-    return [value, name];
-  };
-
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -70,7 +65,10 @@ export const ProductDistributionChart = ({
               height={60}
             />
             <YAxis width={45} />
-            <ChartTooltip formatter={customTooltipFormatter} />
+            <ChartTooltip
+              cursor={false}
+              content={<ChartTooltipContent hideLabel />}
+            />
             <Legend wrapperStyle={{ paddingTop: 10 }} />
             <Bar
               dataKey="tons"

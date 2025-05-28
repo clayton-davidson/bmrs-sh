@@ -10,15 +10,6 @@ import { As400Handler } from "@/lib/misc/as400-handler";
 
 export async function getCustomers(): Promise<Customer[]> {
   const sql = `
-    WITH LastOrders AS (
-        SELECT
-            H8AANB Customer
-            , MAX(H8AQNB) LastOrder
-        FROM
-            COLDMLDTA.CNH8REP
-        GROUP BY
-            H8AANB
-    )
     SELECT
         A.H9AANB Customer
         , A.H9ABNA CustomerName
@@ -26,11 +17,8 @@ export async function getCustomers(): Promise<Customer[]> {
         , A.H9FQCE StateCode
         , A.H9BMTX City
         , COLDMLDTA.C2DATE2(A.H9ALDT, A.H9ACTM) CreateDate
-        , B.LastOrder LastOrder
     FROM
         COLDMLDTA.CNH9REL1 A
-    LEFT JOIN
-        LastOrders B ON A.H9AANB = B.Customer
     WHERE
         A.H9FRSP = 'A'
     `;
