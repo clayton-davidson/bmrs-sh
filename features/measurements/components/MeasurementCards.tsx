@@ -2,12 +2,12 @@
 
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import MeasurementTank from "./MeasurementTank";
-import { Measurement, MeasurementType } from "../schemas/measurements";
+import { MeasurementModel, MeasurementTypeModel } from "@/lib/api";
 
 interface MeasurementCardsProps {
-  types: MeasurementType[];
-  latestReadings: Measurement[];
-  onCardClick: (measurementType: MeasurementType) => void;
+  types: MeasurementTypeModel[] | undefined;
+  latestReadings: MeasurementModel[] | undefined;
+  onCardClick: (measurementType: MeasurementTypeModel) => void;
 }
 
 export default function MeasurementCards({
@@ -17,12 +17,12 @@ export default function MeasurementCards({
 }: MeasurementCardsProps) {
   const calculatePercentage = (
     reading: number,
-    type: MeasurementType
+    type: MeasurementTypeModel
   ): number => {
     const minValue = 0;
     const maxValue = type.capacity;
 
-    if (Math.abs(maxValue - minValue) < 0.001) {
+    if (maxValue === undefined || Math.abs(maxValue - minValue) < 0.001) {
       return 0;
     }
 
@@ -32,12 +32,12 @@ export default function MeasurementCards({
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-      {types.map((type) => {
-        const latestReading = latestReadings.find(
+      {types?.map((type) => {
+        const latestReading = latestReadings?.find(
           (r) => r.typeId === Number(type.id)
         );
         const levelPercentage = latestReading
-          ? calculatePercentage(latestReading.reading, type)
+          ? calculatePercentage(latestReading?.reading ?? 0, type)
           : 0;
 
         return (
@@ -69,7 +69,7 @@ export default function MeasurementCards({
                     {latestReading ? (
                       <div className="flex flex-col">
                         <span className="font-medium text-lg">
-                          {latestReading.reading.toFixed(3)}
+                          {latestReading.reading?.toFixed(3)}
                         </span>
                         <span className="text-xs text-gray-500">
                           {type.unit}
@@ -86,22 +86,20 @@ export default function MeasurementCards({
                     <div className="text-right">
                       <span className="text-xs text-gray-500">
                         Updated{" "}
-                        {new Date(latestReading.takenAt).toLocaleTimeString(
-                          [],
-                          {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }
-                        )}
+                        {new Date(
+                          latestReading.takenAt ?? ""
+                        ).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </span>
                       <div className="text-xs text-gray-400">
-                        {new Date(latestReading.takenAt).toLocaleDateString(
-                          [],
-                          {
-                            month: "short",
-                            day: "numeric",
-                          }
-                        )}
+                        {new Date(
+                          latestReading.takenAt ?? ""
+                        ).toLocaleDateString([], {
+                          month: "short",
+                          day: "numeric",
+                        })}
                       </div>
                     </div>
                   )}

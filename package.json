@@ -6,9 +6,12 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "generate-api": "npx @hey-api/openapi-ts --input http://localhost:52624/openapi/v1.json --output ./lib/api --plugins @hey-api/client-next @tanstack/react-query",
+    "generate-api:watch": "npx @hey-api/openapi-ts --input http://localhost:52624/openapi/v1.json --output ./lib/api --plugins @hey-api/client-next @tanstack/react-query --watch"
   },
   "dependencies": {
+    "@hey-api/client-next": "^0.3.2",
     "@hookform/resolvers": "^5.0.1",
     "@radix-ui/react-avatar": "^1.1.9",
     "@radix-ui/react-collapsible": "^1.1.10",
@@ -39,13 +42,14 @@
     "react": "^19.0.0",
     "react-day-picker": "^9.7.0",
     "react-dom": "^19.0.0",
-    "react-hook-form": "^7.56.3",
+    "react-hook-form": "^7.56.4",
     "recharts": "^2.15.3",
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.2.0",
     "zod": "^3.24.4"
   },
   "devDependencies": {
+    "@hey-api/openapi-ts": "^0.68.0",
     "@tailwindcss/postcss": "^4",
     "@tanstack/react-query-devtools": "^5.75.2",
     "@types/mssql": "^9.1.7",

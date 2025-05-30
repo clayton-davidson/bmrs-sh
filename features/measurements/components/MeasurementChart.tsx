@@ -6,18 +6,13 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Measurement, MeasurementType } from "../schemas/measurements";
 import { LineChart, Line, XAxis, CartesianGrid, YAxis } from "recharts";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { MeasurementModel, MeasurementTypeModel } from "@/lib/api";
 
 interface MeasurementChartProps {
-  data: Measurement[];
-  measurementType: MeasurementType | null;
+  data: MeasurementModel[];
+  measurementType: MeasurementTypeModel | null;
   timeRange: number;
   color: string;
 }
@@ -42,7 +37,7 @@ export default function MeasurementChart({
 
   const chartData = data.map((item) => ({
     ...item,
-    date: new Date(item.takenAt).toISOString(),
+    date: new Date(item.takenAt ?? "").toISOString(),
     reading: item.reading,
   }));
 

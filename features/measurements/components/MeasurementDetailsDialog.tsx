@@ -9,9 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -24,7 +22,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import MeasurementChart from "./MeasurementChart";
 import { getColorForLevel } from "../utils/color-helpers";
-import { Measurement, MeasurementType } from "../schemas/measurements";
 import {
   TrendingDown,
   TrendingUp,
@@ -33,6 +30,8 @@ import {
   BarChart3,
   LineChart,
 } from "lucide-react";
+import { MeasurementModel, MeasurementTypeModel } from "@/lib/api";
+import { getHistoricalMeasurementsOptions } from "@/lib/api/@tanstack/react-query.gen";
 
 const timeRangeOptions = [
   { text: "Last Hour", value: 1 },
@@ -47,7 +46,7 @@ const timeRangeOptions = [
 interface MeasurementDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  measurementType: MeasurementType;
+  measurementType: MeasurementTypeModel;
 }
 
 export default function MeasurementDetailsDialog({
@@ -58,26 +57,21 @@ export default function MeasurementDetailsDialog({
   const [selectedTimeRange, setSelectedTimeRange] = useState<number>(24);
   const [viewMode, setViewMode] = useState<"chart" | "stats">("chart");
 
+  const fromTime = useMemo(
+    () =>
+      measurementType
+        ? dayjs().subtract(selectedTimeRange, "hour").toISOString()
+        : null,
+    [measurementType?.id, selectedTimeRange]
+  );
+
   const { data: historicalReadings = [], isLoading: isHistoricalLoading } =
-    useQuery<Measurement[], Error>({
-      queryKey: [
-        "historicalMeasurements",
-        measurementType?.id,
-        selectedTimeRange,
-      ],
-      queryFn: async (): Promise<Measurement[]> => {
-        if (!measurementType) return [];
-
-        const fromTime = dayjs()
-          .subtract(selectedTimeRange, "hour")
-          .toISOString();
-
-        const response = await fetch(
-          `/api/measurements/history?typeId=${measurementType.id}&fromTime=${fromTime}`
-        );
-        return response.json();
-      },
-      enabled: !!measurementType && open,
+    useQuery({
+      ...getHistoricalMeasurementsOptions({
+        path: { typeId: measurementType?.id ?? 0 },
+        query: { fromTime: fromTime || undefined },
+      }),
+      enabled: !!measurementType && !!fromTime && open,
       refetchInterval: 60000,
     });
 
@@ -86,7 +80,6 @@ export default function MeasurementDetailsDialog({
     setSelectedTimeRange(hours);
   };
 
-  // Calculate statistics from historical readings
   const stats = useMemo(() => {
     if (!historicalReadings || historicalReadings.length === 0) {
       return {
@@ -96,43 +89,66 @@ export default function MeasurementDetailsDialog({
         avg: 0,
         median: 0,
         stdDev: 0,
-        trend: "neutral",
+        trend: "neutral" as const,
         percentChange: 0,
       };
     }
 
-    const readings = historicalReadings.map((r) => r.reading);
+    const validReadings = historicalReadings.filter(
+      (r): r is MeasurementModel & { reading: number } =>
+        r != null && typeof r.reading === "number" && !isNaN(r.reading)
+    );
 
-    // Sort readings for calculations
-    const sortedReadings = [...readings].sort((a, b) => a - b);
+    if (validReadings.length === 0) {
+      return {
+        current: 0,
+        min: 0,
+        max: 0,
+        avg: 0,
+        median: 0,
+        stdDev: 0,
+        trend: "neutral" as const,
+        percentChange: 0,
+      };
+    }
 
-    // Calculate median
+    const readings = validReadings.map((r) => r.reading);
+
+    const sortedReadings = [...readings].sort((a, b) => {
+      const numA = a ?? 0;
+      const numB = b ?? 0;
+      return numA - numB;
+    });
+
     const mid = Math.floor(sortedReadings.length / 2);
     const median =
       sortedReadings.length % 2 !== 0
-        ? sortedReadings[mid]
-        : (sortedReadings[mid - 1] + sortedReadings[mid]) / 2;
+        ? sortedReadings[mid] ?? 0
+        : ((sortedReadings[mid - 1] ?? 0) + (sortedReadings[mid] ?? 0)) / 2;
 
-    // Calculate standard deviation
-    const avg = readings.reduce((sum, val) => sum + val, 0) / readings.length;
+    const avg =
+      readings.reduce((sum, val) => (sum ?? 0) + (val ?? 0), 0) /
+      readings.length;
     const squareDiffs = readings.map((value) => {
-      const diff = value - avg;
+      const safeValue = value ?? 0;
+      const diff = safeValue - avg;
       return diff * diff;
     });
     const avgSquareDiff =
-      squareDiffs.reduce((sum, val) => sum + val, 0) / squareDiffs.length;
+      squareDiffs.reduce((sum, val) => (sum ?? 0) + (val ?? 0), 0) /
+      squareDiffs.length;
     const stdDev = Math.sqrt(avgSquareDiff);
 
-    // Determine trend (using first 25% and last 25% of readings)
-    const quarter = Math.max(1, Math.floor(readings.length / 4));
-    const earlyReadings = historicalReadings.slice(0, quarter);
-    const lateReadings = historicalReadings.slice(-quarter);
+    const quarter = Math.max(1, Math.floor(validReadings.length / 4));
+    const earlyReadings = validReadings.slice(0, quarter);
+    const lateReadings = validReadings.slice(-quarter);
 
     const earlyAvg =
-      earlyReadings.reduce((sum, r) => sum + r.reading, 0) /
+      earlyReadings.reduce((sum, r) => sum + (r.reading ?? 0), 0) /
       earlyReadings.length;
     const lateAvg =
-      lateReadings.reduce((sum, r) => sum + r.reading, 0) / lateReadings.length;
+      lateReadings.reduce((sum, r) => sum + (r.reading ?? 0), 0) /
+      lateReadings.length;
 
     const percentChange =
       earlyAvg !== 0 ? ((lateAvg - earlyAvg) / earlyAvg) * 100 : 0;
@@ -142,9 +158,9 @@ export default function MeasurementDetailsDialog({
     else if (percentChange < -1) trend = "down";
 
     return {
-      current: historicalReadings[historicalReadings.length - 1].reading,
-      min: Math.min(...readings),
-      max: Math.max(...readings),
+      current: validReadings[validReadings.length - 1]?.reading ?? 0,
+      min: Math.min(...readings.map((r) => r ?? 0)),
+      max: Math.max(...readings.map((r) => r ?? 0)),
       avg,
       median,
       stdDev,
@@ -153,9 +169,9 @@ export default function MeasurementDetailsDialog({
     };
   }, [historicalReadings]);
 
-  const latestReading = historicalReadings[historicalReadings.length - 1];
-  const latestValue = latestReading ? latestReading.reading : 0;
-  const maxValue = measurementType?.capacity || 100;
+  const latestReading = historicalReadings?.[historicalReadings.length - 1];
+  const latestValue = latestReading?.reading ?? 0;
+  const maxValue = measurementType?.capacity ?? 100;
   const levelPercentage = Math.min(
     100,
     Math.max(0, Math.round((latestValue / maxValue) * 100))
@@ -172,7 +188,8 @@ export default function MeasurementDetailsDialog({
   };
 
   const formatReading = (value: number): string => {
-    return value.toFixed(measurementType?.unit === "%" ? 1 : 3);
+    const safeValue = value ?? 0;
+    return safeValue.toFixed(measurementType?.unit === "%" ? 1 : 3);
   };
 
   return (
@@ -184,11 +201,11 @@ export default function MeasurementDetailsDialog({
               className="inline-block w-3 h-3 rounded-full"
               style={{ backgroundColor: color }}
             ></span>
-            {measurementType?.name} Trend
+            {measurementType?.name ?? "Unknown"} Trend
           </DialogTitle>
           <DialogDescription>
-            Historical measurement data for {measurementType?.name} (
-            {measurementType?.unit})
+            Historical measurement data for {measurementType?.name ?? "Unknown"}{" "}
+            ({measurementType?.unit ?? "units"})
           </DialogDescription>
         </DialogHeader>
 
@@ -221,7 +238,6 @@ export default function MeasurementDetailsDialog({
               </Select>
             </div>
 
-            {/* Custom tab buttons instead of shadcn Tabs */}
             <div className="w-[200px] grid grid-cols-2 p-1 gap-1 bg-muted rounded-md">
               <button
                 onClick={() => setViewMode("chart")}
@@ -275,7 +291,7 @@ export default function MeasurementDetailsDialog({
                           {formatReading(stats.current)}
                         </span>
                         <span className="ml-1 text-sm text-gray-500">
-                          {measurementType.unit}
+                          {measurementType?.unit ?? "units"}
                         </span>
                       </div>
                     </div>
@@ -293,7 +309,7 @@ export default function MeasurementDetailsDialog({
                           {formatReading(stats.avg)}
                         </span>
                         <span className="ml-1 text-sm text-gray-500">
-                          {measurementType.unit}
+                          {measurementType?.unit ?? "units"}
                         </span>
                       </div>
                     </div>
@@ -315,7 +331,7 @@ export default function MeasurementDetailsDialog({
                           {formatReading(stats.max)}
                         </span>
                         <span className="ml-1 text-sm text-gray-500">
-                          {measurementType.unit}
+                          {measurementType?.unit ?? "units"}
                         </span>
                       </div>
                     </div>
@@ -361,7 +377,7 @@ export default function MeasurementDetailsDialog({
                           {formatReading(stats.median)}
                         </span>
                         <span className="ml-1 text-sm text-gray-500">
-                          {measurementType.unit}
+                          {measurementType?.unit ?? "units"}
                         </span>
                       </div>
                       <p className="text-xs text-gray-500 mt-2">
@@ -382,7 +398,7 @@ export default function MeasurementDetailsDialog({
                           ±{formatReading(stats.stdDev)}
                         </span>
                         <span className="ml-1 text-sm text-gray-500">
-                          {measurementType.unit}
+                          {measurementType?.unit ?? "units"}
                         </span>
                       </div>
                       <p className="text-xs text-gray-500 mt-2">
@@ -403,7 +419,7 @@ export default function MeasurementDetailsDialog({
                           {formatReading(stats.max - stats.min)}
                         </span>
                         <span className="ml-1 text-sm text-gray-500">
-                          {measurementType.unit}
+                          {measurementType?.unit ?? "units"}
                         </span>
                       </div>
                       <p className="text-xs text-gray-500 mt-2">
@@ -415,43 +431,50 @@ export default function MeasurementDetailsDialog({
               </div>
 
               <div className="mt-4 text-xs text-gray-500">
-                Based on {historicalReadings.length} measurements from{" "}
-                {historicalReadings.length > 0
+                Based on {historicalReadings?.length ?? 0} measurements from{" "}
+                {historicalReadings &&
+                historicalReadings.length > 0 &&
+                historicalReadings[0]?.takenAt
                   ? new Date(historicalReadings[0].takenAt).toLocaleString()
                   : "-"}{" "}
                 to{" "}
-                {historicalReadings.length > 0
+                {historicalReadings &&
+                historicalReadings.length > 0 &&
+                historicalReadings[historicalReadings.length - 1]?.takenAt
                   ? new Date(
-                      historicalReadings[historicalReadings.length - 1].takenAt
+                      historicalReadings[historicalReadings.length - 1]
+                        .takenAt ?? ""
                     ).toLocaleString()
                   : "-"}
               </div>
             </div>
           )}
 
-          {/* Statistics summary (only shows when in chart view) */}
           {!isHistoricalLoading &&
             viewMode === "chart" &&
+            historicalReadings &&
             historicalReadings.length > 0 && (
               <div className="mt-6 border-t pt-4">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                   <div>
                     <span className="text-sm text-gray-500">Average</span>
                     <div className="font-semibold">
-                      {formatReading(stats.avg)} {measurementType.unit}
+                      {formatReading(stats.avg)}{" "}
+                      {measurementType?.unit ?? "units"}
                     </div>
                   </div>
                   <div>
                     <span className="text-sm text-gray-500">Min/Max</span>
                     <div className="font-semibold">
                       {formatReading(stats.min)} - {formatReading(stats.max)}{" "}
-                      {measurementType.unit}
+                      {measurementType?.unit ?? "units"}
                     </div>
                   </div>
                   <div>
                     <span className="text-sm text-gray-500">Median</span>
                     <div className="font-semibold">
-                      {formatReading(stats.median)} {measurementType.unit}
+                      {formatReading(stats.median)}{" "}
+                      {measurementType?.unit ?? "units"}
                     </div>
                   </div>
                   <div>

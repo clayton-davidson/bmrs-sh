@@ -32,7 +32,6 @@ const items: MenuItem[] = [
       { label: "Meeting Report", url: "/reports/meeting-report" },
       { label: "Logbook", url: "/reports/logbook" },
       { label: "Maintenance Items", url: "/reports/maintenance-items" },
-      { label: "Hydraulic Report", url: "/reports/hydraulic" },
       { label: "Daily Shift Inspections", url: "/reports/shift-inspections" },
       { label: "Measurements", url: "/reports/measurements" },
       { label: "Work Order Search", url: "/reports/work-order-search" },
